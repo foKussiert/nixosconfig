@@ -1,0 +1,8 @@
+# Editor backups and swap files
+*~
+*.swp
+*.swo
+
+# Output of `nix build`
+result
+result-*
