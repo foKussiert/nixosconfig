@@ -2,7 +2,7 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, inputs, ... }:
 
 {
   imports =
@@ -13,7 +13,7 @@
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-
+  boot.loader.systemd-boot.graceful = true;
   networking.hostName = "kuss"; # Define your hostname.
   # Pick only one of the below networking options.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -25,7 +25,8 @@
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
+  # for Zen Browser Features
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
   # Select internationalisation properties.
   # i18n.defaultLocale = "en_US.UTF-8";
   # console = {
@@ -50,10 +51,11 @@
      sddm = {
 	enable = true;
      };
-     defaultSession = "plasmax11";
+    # defaultSession = "plasmax11";
    };
    desktopManager.plasma6.enable = true;
   };
+  # ZenPackage
 
 
   
@@ -96,6 +98,7 @@
     bat
     vscodium
     git
+    inputs.zen-browser.packages."${pkgs.system}".default
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -121,7 +124,7 @@
   # Copy the NixOS configuration file and link it from the resulting system
   # (/run/current-system/configuration.nix). This is useful in case you
   # accidentally delete configuration.nix.
-  system.copySystemConfiguration = true;
+  # system.copySystemConfiguration = true;
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
