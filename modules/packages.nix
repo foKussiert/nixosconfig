@@ -3,6 +3,8 @@
 { pkgs, inputs, ... }:
 
 {
+  nixpkgs.config.allowUnfree = true;
+
   programs.firefox.enable = true;
 
   environment.systemPackages = with pkgs; [
@@ -10,6 +12,7 @@
     wget
     git
     bat
+    claude-code  
     vscodium
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
