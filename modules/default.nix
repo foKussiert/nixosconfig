@@ -6,5 +6,6 @@
     ./audio.nix
     ./packages.nix
     ./theme.nix
+    ./hyprland.nix
   ];
 }

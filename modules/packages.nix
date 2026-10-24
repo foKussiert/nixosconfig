@@ -8,6 +8,8 @@
   programs.firefox.enable = true;
 
   environment.systemPackages = with pkgs; [
+    jdk21
+    maven
     vim
     wget
     git
