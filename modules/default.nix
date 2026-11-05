@@ -7,5 +7,6 @@
     ./packages.nix
     ./theme.nix
     ./hyprland.nix
+    ./gaming.nix
   ];
 }
