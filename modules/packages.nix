@@ -2,6 +2,12 @@
 # Search for packages at https://search.nixos.org/
 { pkgs, inputs, ... }:
 
+let
+  unstable = import inputs.nixpkgs-unstable {
+    system = pkgs.stdenv.hostPlatform.system;
+    config.allowUnfree = true;
+  };
+in
 {
   nixpkgs.config.allowUnfree = true;
 
@@ -14,7 +20,7 @@
     wget
     git
     bat
-    claude-code  
+    unstable.claude-code  
     vscodium
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
