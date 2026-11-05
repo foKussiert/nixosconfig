@@ -14,6 +14,7 @@ in
   programs.firefox.enable = true;
 
   environment.systemPackages = with pkgs; [
+    discord
     jdk21
     maven
     vim
