@@ -120,9 +120,23 @@
       portalPackage = null;
       configType = "hyprlang";
 
+      submaps.resize.settings = {
+        binde = [
+          ", right, resizeactive, 30 0"
+          ", left, resizeactive, -30 0"
+          ", up, resizeactive, 0 -30"
+          ", down, resizeactive, 0 30"
+        ];
+        bind = [
+          ", escape, submap, reset"
+          ", Return, submap, reset"
+        ];
+      };
+
       settings = {
         "$terminal" = "ghostty";
         "$mod" = "SUPER";
+        monitor = [ "eDP-1,preferred,auto,1.25" ];
 
         input = {
           kb_layout = "de";
@@ -168,6 +182,11 @@
 
         bind = [
           "$mod, Return, exec, $terminal"
+          "$mod SHIFT, left, movewindow, l"
+          "$mod SHIFT, right, movewindow, r"
+          "$mod SHIFT, up, movewindow, u"
+          "$mod SHIFT, down, movewindow, d"
+          "$mod, R, submap, resize"
           "$mod, L, exec, hyprlock"
 	  "$mod, Q, killactive"
           "$mod, M, exit"
