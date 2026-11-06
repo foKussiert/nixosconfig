@@ -1,10 +1,119 @@
 { pkgs, ... }:
 {
   programs.hyprland.enable = true;
-
+  programs.hyprlock.enable = true;
+  fonts.packages = [
+    pkgs.cinzel
+    pkgs.noto-fonts-cjk-serif
+    (pkgs.google-fonts.override { fonts = [ "UnifrakturMaguntia" "PirataOne" "GrenzeGotisch" "NewRocker" "MetalMania" ]; })
+  ];
   home-manager.users.kuss = {
     home.packages = [ pkgs.ghostty ];
 
+    programs.hyprlock = {
+      enable = true;
+      settings = {
+        general = {
+          hide_cursor = true;
+        };
+
+        background = [{
+          path = "screenshot";
+          color = "rgba(0a0000ff)";
+          blur_passes = 4;
+          blur_size = 7;
+          brightness = 0.25;
+          contrast = 1.2;
+          vibrancy = 0.1;
+          noise = 0.02;
+        }];
+
+        label = [
+          {
+            text = "戦え";
+            font_family = "Noto Serif CJK JP";
+            font_size = 90;
+            color = "rgba(b3001bff)";
+            shadow_passes = 3;
+            shadow_size = 8;
+            shadow_color = "rgba(ff0022aa)";
+            shadow_boost = 1.4;
+            position = "0, 260";
+            halign = "center";
+            valign = "center";
+          }
+          {
+            text = "$TIME";
+            font_family = "Cinzel";
+            font_size = 110;
+            color = "rgba(e8dcdcff)";
+            shadow_passes = 2;
+            shadow_size = 6;
+            shadow_color = "rgba(000000ff)";
+            position = "0, 90";
+            halign = "center";
+            valign = "center";
+          }
+          # Datum
+          {
+            text = ''cmd[update:60000] date +"%-d · %m · %Y"'';
+            font_family = "UnifrakturMaguntia";
+            font_size = 30;
+            color = "rgba(8a1c24ff)";
+            shadow_passes = 2;
+            shadow_size = 5;
+            shadow_color = "rgba(b3001b88)";
+            position = "0, -10";
+            halign = "center";
+            valign = "center";
+          }
+          # Benutzername unter dem Feld
+          {
+            text = "— $USER —";
+            font_family = "Cinzel";
+            font_size = 14;
+            color = "rgba(6b6060ff)";
+            position = "0, -190";
+            halign = "center";
+            valign = "center";
+          }
+        ];
+
+        # Dünner roter Strich unter dem Datum
+        shape = [{
+          size = "260, 2";
+          color = "rgba(b3001bcc)";
+          rounding = 0;
+          position = "0, -40";
+          halign = "center";
+          valign = "center";
+        }];
+
+        input-field = [{
+          size = "300, 52";
+          position = "0, -120";
+          halign = "center";
+          valign = "center";
+          outline_thickness = 2;
+          rounding = 0;
+          outer_color = "rgba(b3001bff)";
+          inner_color = "rgba(0d0000ee)";
+          font_color = "rgba(e8dcdcff)";
+          font_family = "Cinzel";
+          check_color = "rgba(5a0010ff)";
+          fail_color = "rgba(ff0022ff)";
+          fail_text = "<i>falsch</i>";
+          placeholder_text = "<i>passwort</i>";
+          dots_size = 0.25;
+          dots_spacing = 0.4;
+          dots_center = true;
+          fade_on_empty = false;
+          shadow_passes = 2;
+          shadow_size = 10;
+          shadow_color = "rgba(b3001b66)";
+        }];
+      };
+    };
     wayland.windowManager.hyprland = {
       enable = true;
       package = null;
@@ -19,9 +128,48 @@
           kb_layout = "de";
         };
 
+        general = {
+          gaps_in = 4;
+          gaps_out = 8;
+          border_size = 2;
+          "col.active_border" = "rgba(b3001bff) rgba(1a0000ff) 45deg";
+          "col.inactive_border" = "rgba(1a1a1aff)";
+          layout = "dwindle";
+        };
+
+        decoration = {
+          rounding = 3;
+          dim_inactive = true;
+          dim_strength = 0.25;
+
+          shadow = {
+            enabled = true;
+            range = 15;
+            color = "rgba(b3001b55)";
+          };
+
+          blur = {
+            enabled = true;
+            size = 6;
+            passes = 3;
+          };
+        };
+
+        animations = {
+          enabled = true;
+          bezier = [ "sharp, 0.25, 1, 0.5, 1" ];
+          animation = [
+            "windows, 1, 3, sharp, popin 80%"
+            "fade, 1, 3, sharp"
+            "border, 1, 5, default"
+            "workspaces, 1, 3, sharp, slide"
+          ];
+        };
+
         bind = [
           "$mod, Return, exec, $terminal"
-          "$mod, Q, killactive"
+          "$mod, L, exec, hyprlock"
+	  "$mod, Q, killactive"
           "$mod, M, exit"
           "$mod, V, togglefloating"
           "$mod, F, fullscreen"
