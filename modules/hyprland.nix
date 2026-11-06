@@ -173,7 +173,7 @@
           "$mod, M, exit"
           "$mod, V, togglefloating"
           "$mod, F, fullscreen"
-
+	  "$mod, B, exec, zen-beta"
           "$mod, left, movefocus, l"
           "$mod, right, movefocus, r"
           "$mod, up, movefocus, u"

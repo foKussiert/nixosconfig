@@ -21,6 +21,7 @@ in
     wget
     git
     bat
+    yazi
     unstable.claude-code  
     vscodium
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
