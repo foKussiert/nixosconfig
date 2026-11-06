@@ -114,6 +114,31 @@
         }];
       };
     };
+    # App-Starter: Theme "rounded-red-dark" von newmanls/rofi-themes-collection, Farben angepasst
+    programs.rofi = {
+      enable = true;
+      theme = let
+        themes = pkgs.fetchFromGitHub {
+          owner = "newmanls";
+          repo = "rofi-themes-collection";
+          rev = "911cc27afe9c66d7e2cb06a47c905d046ea3dfd2";
+          hash = "sha256-YdsuzmpU/fokvF1/vKuiK/eOLFGfhJcFu8HvUIqx9Ao=";
+        };
+      in "${pkgs.writeText "rounded-goth.rasi" ''
+        * {
+            bg0: #0D0000F2;
+            bg1: #1A0505;
+            bg2: #3D0A0E80;
+            bg3: #B3001BF2;
+            fg0: #E8DCDC;
+            fg1: #FFFFFF;
+            fg2: #8A1C24;
+            fg3: #4A3A3A;
+        }
+        @import "${themes}/themes/template/rounded-template.rasi"
+      ''}";
+    };
+
     wayland.windowManager.hyprland = {
       enable = true;
       package = null;
@@ -193,6 +218,7 @@
           "$mod, V, togglefloating"
           "$mod, F, fullscreen"
 	  "$mod, B, exec, zen-beta"
+          "$mod, D, exec, rofi -show drun -show-icons"
           "$mod, left, movefocus, l"
           "$mod, right, movefocus, r"
           "$mod, up, movefocus, u"
