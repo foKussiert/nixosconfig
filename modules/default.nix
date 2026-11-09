@@ -8,5 +8,6 @@
     ./theme.nix
     ./hyprland.nix
     ./gaming.nix
+    ./bluetooth.nix
   ];
 }
