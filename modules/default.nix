@@ -9,5 +9,6 @@
     ./hyprland.nix
     ./gaming.nix
     ./bluetooth.nix
+    ./waybar.nix
   ];
 }
