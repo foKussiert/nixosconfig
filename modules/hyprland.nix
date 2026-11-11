@@ -236,6 +236,10 @@
           "$mod SHIFT, 3, movetoworkspace, 3"
           "$mod SHIFT, 4, movetoworkspace, 4"
           "$mod SHIFT, 5, movetoworkspace, 5"
+
+          ", XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
+          ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
+          ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
         ];
 
         bindm = [
