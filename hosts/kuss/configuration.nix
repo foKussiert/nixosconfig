@@ -20,7 +20,7 @@
   # Time zone
   time.timeZone = "Europe/Berlin";
 
-  # User (set a password with `passwd`)
+  # User 
   users.users.kuss = {
     isNormalUser = true;
     extraGroups = [ "networkmanager" "wheel" ];
@@ -29,7 +29,5 @@
     ];
   };
 
-  # First installed NixOS version. Do not change.
-  # See https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion
   system.stateVersion = "25.05";
 }
