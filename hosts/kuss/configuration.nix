@@ -17,6 +17,11 @@
   networking.hostName = "kuss";
   networking.networkmanager.enable = true;
 
+  # Alias
+  environment.shellAliases = {
+    bau = "sudo nixos-rebuild switch --flake ~/nixos#kuss";
+  };
+
   # Time zone
   time.timeZone = "Europe/Berlin";
 

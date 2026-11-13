@@ -10,5 +10,6 @@
     ./gaming.nix
     ./bluetooth.nix
     ./waybar.nix
+    ./docker.nix
   ];
 }
