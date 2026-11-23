@@ -66,7 +66,16 @@ in
       style = builtins.replaceStrings
         [ ''@import "themes/catppuccin-mocha.css";'' ''"GoogleSansCode Nerd Font"'' ]
         [ ''@import "goth.css";'' ''"JetBrainsMono Nerd Font"'' ]
-        (builtins.readFile "${mechabar}/style.css");
+        (builtins.readFile "${mechabar}/style.css")
+        + ''
+          #power-profiles-daemon {
+            padding: 0 4px;
+            background-color: @m_bg_1;
+          }
+          #power-profiles-daemon:hover {
+            color: @m_fg_alt;
+          }
+        '';
 
       settings = [{
         mode = "dock";
@@ -95,7 +104,7 @@ in
           "custom/left#accent" "custom/distro" "custom/right#accent"
           "custom/right_inverse#bg_3" "idle_inhibitor" "clock#time" "custom/right#bg_3"
           "clock#date" "custom/right#bg_2"
-          "network" "bluetooth" "custom/right#bg_1"
+          "network" "bluetooth" "power-profiles-daemon" "custom/right#bg_1"
         ];
 
         modules-right = [
@@ -118,6 +127,16 @@ in
           rewrite = { "" = "Desktop"; "com.mitchellh.ghostty" = "Terminal"; };
         };
         "clock#date" = { format = "󰸗 {:%d.%m}"; };
+        "power-profiles-daemon" = {
+          format = "{icon}";
+          min-length = 2;
+          max-length = 2;
+          format-icons = {
+            performance = "󰓅";
+            balanced = "󰾅";
+            power-saver = "󰌪";
+          };
+        };
         network = { on-click = "ghostty -e ${scripts}/network menu"; };
         bluetooth = { on-click = "ghostty -e ${scripts}/bluetooth menu"; };
         "custom/power" = { on-click = "ghostty -e ${scripts}/power"; };

@@ -25,6 +25,8 @@ in
     yazi
     unstable.claude-code  
     vscodium
+    flameshot
+    grim
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 }

@@ -11,5 +11,6 @@
     ./bluetooth.nix
     ./waybar.nix
     ./docker.nix
+    ./screenshots.nix
   ];
 }
