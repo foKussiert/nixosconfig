@@ -10,6 +10,30 @@ let
       -fill '#0D0406' -pointsize 230 -gravity center -annotate +420-140 '戦' -annotate +420+100 'え' \
       png:$out
   '';
+
+  # Super + Enter: Terminal mit zufälligem Hintergrund-Effekt
+  terminalZufall = pkgs.writeShellScript "terminal-zufall" ''
+    effekte=(
+      ${./terminal-effekte/higanbana.glsl}
+      ${./terminal-effekte/tusche.glsl}
+      ${./terminal-effekte/glut.glsl}
+      ${./terminal-effekte/schrift.glsl}
+    )
+    exec ${pkgs.ghostty}/bin/ghostty --gtk-single-instance=false \
+      --custom-shader="''${effekte[RANDOM % ''${#effekte[@]}]}" "$@"
+  '';
+
+  # Super + A: Effekte in allen Terminals an/aus (die Datei überschreibt den Shader)
+  effekteUmschalten = pkgs.writeShellScript "effekte-umschalten" ''
+    aus="$HOME/.local/state/ghostty/effekte-aus.conf"
+    ${pkgs.coreutils}/bin/mkdir -p "$HOME/.local/state/ghostty"
+    if [ -e "$aus" ]; then
+      ${pkgs.coreutils}/bin/rm "$aus"
+    else
+      echo "custom-shader =" > "$aus"
+    fi
+    ${pkgs.procps}/bin/pkill -USR2 -x '.ghostty-wrappe'
+  '';
 in
 {
   programs.hyprland.enable = true;
@@ -39,6 +63,10 @@ in
       enable = true;
       settings = {
         background-opacity = 0.94;
+        # Hintergrund-Effekte laufen nur im aktiven Terminal
+        custom-shader-animation = true;
+        config-file = "?/home/kuss/.local/state/ghostty/effekte-aus.conf";
+        app-notifications = "no-config-reload";
         background = "#12070A";
         foreground = "#E6DFD3";
         cursor-color = "#FF1F3D";
@@ -207,7 +235,7 @@ in
       };
 
       settings = {
-        "$terminal" = "ghostty";
+        "$terminal" = "${terminalZufall}";
         "$mod" = "SUPER";
         monitor = [ "eDP-1,preferred,auto,1.25" ];
 
@@ -256,12 +284,12 @@ in
           enabled = true;
           bezier = [
             "gleiten, 0.16, 1, 0.3, 1"
-            "federn, 0.34, 1.3, 0.64, 1"
             "raus, 0.7, 0, 0.84, 0"
           ];
           animation = [
-            "windowsIn, 1, 4, federn, popin 90%"
-            "windowsOut, 1, 2.5, raus, popin 95%"
+            # Schnitt: Fenster klappen aus einer Linie auf und schließen sich wieder dorthin
+            "windowsIn, 1, 3.5, gleiten, gnomed"
+            "windowsOut, 1, 2.5, raus, gnomed"
             "windowsMove, 1, 4, gleiten"
             "fadeIn, 1, 3, gleiten"
             "fadeOut, 1, 2, raus"
@@ -290,6 +318,7 @@ in
           "$mod, E, exec, ghostty -e yazi"
           "$mod, B, exec, zen-beta"
           "$mod, D, exec, rofi -show drun -show-icons"
+          "$mod, A, exec, ${effekteUmschalten}"
 	  "$mod, S, exec, flameshot gui --clipboard --accept-on-select"
 	 
           "$mod, left, movefocus, l"
