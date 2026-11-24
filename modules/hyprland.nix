@@ -34,10 +34,151 @@ let
     fi
     ${pkgs.procps}/bin/pkill -USR2 -x '.ghostty-wrappe'
   '';
+
+  # Bootscreen: 戦え pulsiert auf Schwarzrot
+  tatakaeBoot = pkgs.runCommand "tatakae-plymouth" { nativeBuildInputs = [ pkgs.imagemagick ]; } ''
+    t=$out/share/plymouth/themes/tatakae
+    mkdir -p $t
+    magick -size 300x520 xc:none \
+      -font ${japanFont}/share/fonts/truetype/ShipporiMincho-Bold.ttf \
+      -fill '#D9434E' -pointsize 190 -gravity center \
+      -annotate +0-125 '戦' -annotate +0+115 'え' $t/tatakae.png
+    cat > $t/tatakae.plymouth <<EOF
+    [Plymouth Theme]
+    Name=Tatakae
+    Description=戦え auf Schwarzrot
+    ModuleName=script
+
+    [script]
+    ImageDir=$t
+    ScriptFile=$t/tatakae.script
+    EOF
+    cat > $t/tatakae.script <<'EOF'
+    Window.SetBackgroundTopColor(0.07, 0.027, 0.039);
+    Window.SetBackgroundBottomColor(0.07, 0.027, 0.039);
+    global.bild = Image("tatakae.png");
+    global.zeichen = Sprite(global.bild);
+    global.zeichen.SetX(Window.GetWidth() / 2 - global.bild.GetWidth() / 2);
+    global.zeichen.SetY(Window.GetHeight() / 2 - global.bild.GetHeight() / 2);
+    global.t = 0;
+    fun refresh_callback() {
+      global.t = global.t + 1;
+      global.zeichen.SetOpacity(0.55 + 0.45 * Math.Sin(global.t / 35));
+    }
+    Plymouth.SetRefreshFunction(refresh_callback);
+    EOF
+  '';
+
+  # Mauszeiger: spitzer Bibata-Zeiger, schwarz mit rotem Rand
+  blutCursor = pkgs.runCommand "blut-cursor" {
+    nativeBuildInputs = [ pkgs.xcur2png pkgs.xcursorgen pkgs.imagemagick ];
+  } ''
+    src=${pkgs.bibata-cursors}/share/icons/Bibata-Original-Classic
+    ziel=$out/share/icons/Blut-Cursor
+    mkdir -p $ziel/cursors
+    printf '[Icon Theme]\nName=Blut-Cursor\nComment=Schwarz mit rotem Rand\nInherits=hicolor\n' > $ziel/index.theme
+    for f in $src/cursors/*; do
+      n=$(basename "$f")
+      if [ -L "$f" ]; then
+        ln -s "$(basename "$(readlink "$f")")" "$ziel/cursors/$n"
+        continue
+      fi
+      tmp=$(mktemp -d)
+      xcur2png -q -d "$tmp" -c "$tmp/c.conf" "$f"
+      magick mogrify -channel RGB +level-colors '#12070A,#FF1F3D' "$tmp"/*.png
+      xcursorgen "$tmp/c.conf" "$ziel/cursors/$n"
+      rm -rf "$tmp"
+    done
+  '';
+
+  # Super + Esc: Ausschalt-Menü im Vollbild
+  energieMenue = pkgs.writeShellScript "energie-menue" ''
+    stil='window { fullscreen: true; location: center; anchor: center; y-offset: 0; background-color: #0B0405F2; border: 0; }
+      mainbox { padding: 0 12%; children: [ "listview" ]; }
+      inputbar { enabled: false; }
+      listview { columns: 5; lines: 1; spacing: 16px; margin: calc(50% - 94px) 0 0 0; }
+      element { orientation: vertical; padding: 24px; }
+      element-icon { enabled: false; }
+      element-text { horizontal-align: 0.5; vertical-align: 0.5; }'
+    e() { printf "<span font='Shippori Mincho 56'>%s</span>\n<span size='small'>%s</span>" "$1" "$2"; }
+    menue() { rofi -dmenu -sep '|' -markup-rows -format i -no-custom -eh 7 -theme-str "$stil$1"; }
+    sicher() {
+      a=$(printf '%s' "$(e 否 Abbrechen)|$(e "$1" "$2")" | menue ' listview { columns: 2; } mainbox { padding: 0 30%; }') || return 1
+      [ "$a" = 1 ]
+    }
+    i=$(printf '%s' "$(e 鎖 Sperren)|$(e 眠 Schlafen)|$(e 退 Abmelden)|$(e 蘇 Neustart)|$(e 死 Ausschalten)" | menue "") || exit 0
+    case "$i" in
+      0) hyprlock ;;
+      1) systemctl suspend ;;
+      2) sicher 退 Abmelden && hyprctl dispatch exit ;;
+      3) sicher 蘇 Neustart && systemctl reboot ;;
+      4) sicher 死 Ausschalten && systemctl poweroff ;;
+    esac
+  '';
+
+  # Super + Shift + 7 (also Super + /): zeigt alle Tastenkürzel durchsuchbar an
+  tastenFilter = pkgs.writeText "tasten.jq" ''
+    def hat($b): ((.modmask / $b | floor) % 2) == 1;
+    def taste:
+      ({"Return":"Enter","left":"←","right":"→","up":"↑","down":"↓","Escape":"Esc","TAB":"Tab","Tab":"Tab",
+        "mouse:272":"Linke Maus","mouse:273":"Rechte Maus","XF86AudioRaiseVolume":"Lauter-Taste",
+        "XF86AudioLowerVolume":"Leiser-Taste","XF86AudioMute":"Stumm-Taste",
+        "XF86MonBrightnessUp":"Heller-Taste","XF86MonBrightnessDown":"Dunkler-Taste"}[.key]) // (.key | ascii_upcase);
+    def tasten: [(if hat(64) then "Super" else empty end), (if hat(4) then "Strg" else empty end),
+      (if hat(8) then "Alt" else empty end), (if hat(1) then "Shift" else empty end), taste] | join(" + ");
+    def was:
+      .dispatcher as $d | .arg as $a |
+      if $d == "exec" then
+        if ($a | test("terminal-zufall")) then "Terminal öffnen"
+        elif ($a | test("effekte-umschalten")) then "Terminal-Effekte an/aus"
+        elif ($a | test("energie-menue")) then "Ausschalt-Menü"
+        elif ($a | test("tastenkuerzel")) then "Diese Liste"
+        elif ($a | test("hyprlock")) then "Bildschirm sperren"
+        elif ($a | test("rofi")) then "Apps suchen"
+        elif ($a | test("flameshot")) then "Screenshot"
+        elif ($a | test("zen")) then "Browser"
+        elif ($a | test("yazi")) then "Dateimanager"
+        elif ($a | test("5%\\+")) then (if ($a | test("wpctl")) then "Lauter" else "Heller" end)
+        elif ($a | test("5%-")) then (if ($a | test("wpctl")) then "Leiser" else "Dunkler" end)
+        elif ($a | test("set-mute")) then "Ton an/aus"
+        else $a end
+      elif $d == "killactive" then "Fenster schließen"
+      elif $d == "exit" then "Hyprland beenden"
+      elif $d == "togglefloating" then "Fenster schwebend/fest"
+      elif $d == "fullscreen" then "Vollbild"
+      elif $d == "movefocus" then "Fokus bewegen"
+      elif $d == "movewindow" then (if .mouse then "Fenster ziehen" else "Fenster verschieben" end)
+      elif $d == "resizewindow" then "Fenstergröße ändern"
+      elif $d == "workspace" then "Zu Workspace \($a)"
+      elif $d == "movetoworkspace" then "Fenster auf Workspace \($a)"
+      elif $d == "submap" then "Größe ändern (Modus)"
+      elif $d == "overview:toggle" then "Workspace-Übersicht"
+      else "\($d) \($a)" end;
+    .[] | select(.submap == "") | tasten as $k |
+      "\($k)\(" " * ([28 - ($k | length), 1] | max))\(was)"
+  '';
+  tastenkuerzel = pkgs.writeShellScript "tastenkuerzel" ''
+    hyprctl -j binds | ${pkgs.jq}/bin/jq -r -f ${tastenFilter} |
+      rofi -dmenu -i -p "戦" -no-custom -theme-str 'window { width: 720px; } listview { lines: 14; }'
+  '';
 in
 {
   programs.hyprland.enable = true;
   programs.hyprlock.enable = true;
+
+  # Bootscreen statt Textzeilen (das Catppuccin-Theme würde ihn sonst überschreiben)
+  catppuccin.plymouth.enable = false;
+  boot = {
+    plymouth = {
+      enable = true;
+      theme = "tatakae";
+      themePackages = [ tatakaeBoot ];
+    };
+    consoleLogLevel = 3;
+    initrd.verbose = false;
+    kernelParams = [ "quiet" "udev.log_level=3" "systemd.show_status=auto" ];
+  };
+
   fonts.packages = [
     pkgs.cinzel
     pkgs.noto-fonts-cjk-serif
@@ -45,6 +186,12 @@ in
     (pkgs.google-fonts.override { fonts = [ "UnifrakturMaguntia" "PirataOne" "GrenzeGotisch" "NewRocker" "MetalMania" ]; })
   ];
   home-manager.users.kuss = {
+    home.pointerCursor = {
+      package = blutCursor;
+      name = "Blut-Cursor";
+      size = 24;
+    };
+
     systemd.user.services.wallpaper = {
       Unit = {
         Description = "Wallpaper";
@@ -221,6 +368,12 @@ in
       portalPackage = null;
       configType = "hyprlang";
 
+      # Workspace-Übersicht (Super + Tab). Direkt in der Config geladen,
+      # damit Hyprland das Tastenkürzel dafür nicht als Fehler meldet.
+      extraConfig = ''
+        plugin = ${pkgs.hyprlandPlugins.hyprspace}/lib/libhyprspace.so
+      '';
+
       submaps.resize.settings = {
         binde = [
           ", right, resizeactive, 30 0"
@@ -238,6 +391,24 @@ in
         "$terminal" = "${terminalZufall}";
         "$mod" = "SUPER";
         monitor = [ "eDP-1,preferred,auto,1.25" ];
+        env = [ "XCURSOR_THEME,Blut-Cursor" "XCURSOR_SIZE,24" ];
+        exec = [ "hyprctl setcursor Blut-Cursor 24" ];
+
+        plugin.overview = {
+          panelColor = "rgba(12070aee)";
+          panelBorderColor = "rgba(8a1c24ff)";
+          panelBorderWidth = 2;
+          workspaceActiveBackground = "rgba(3d0a10ff)";
+          workspaceInactiveBackground = "rgba(1a0a0dff)";
+          workspaceActiveBorder = "rgba(ff1f3dff)";
+          workspaceInactiveBorder = "rgba(4a1016ff)";
+          workspaceBorderSize = 2;
+          centerAligned = true;
+          autoDrag = true;
+          exitOnClick = true;
+          exitOnSwitch = true;
+          showNewWorkspace = false;
+        };
 
         input = {
           kb_layout = "de";
@@ -319,6 +490,9 @@ in
           "$mod, B, exec, zen-beta"
           "$mod, D, exec, rofi -show drun -show-icons"
           "$mod, A, exec, ${effekteUmschalten}"
+          "$mod, Escape, exec, ${energieMenue}"
+          "$mod SHIFT, 7, exec, ${tastenkuerzel}"
+          "$mod, TAB, overview:toggle"
 	  "$mod, S, exec, flameshot gui --clipboard --accept-on-select"
 	 
           "$mod, left, movefocus, l"
